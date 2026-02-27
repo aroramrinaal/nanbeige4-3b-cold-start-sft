@@ -29,7 +29,7 @@ def run_inference(prompt: str) -> str:
 
     hf_token = os.environ["HF_TOKEN"]
 
-    print(f"loading tokenizer for {MODEL_NAME}...")
+    print(f"Loading tokenizer for {MODEL_NAME}...")
     tokenizer = AutoTokenizer.from_pretrained(
         MODEL_NAME,
         use_fast=False,
@@ -37,7 +37,7 @@ def run_inference(prompt: str) -> str:
         token=hf_token,
     )
 
-    print(f"loading model for {MODEL_NAME}...")
+    print(f"Loading model for {MODEL_NAME}...")
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_NAME,
         torch_dtype="auto",
@@ -62,7 +62,7 @@ def run_inference(prompt: str) -> str:
         skip_special_tokens=True,
     )
 
-    print(f"response: {response}")
+    print(f"Response: {response}")
     return response
 
 

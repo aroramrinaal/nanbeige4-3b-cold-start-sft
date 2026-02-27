@@ -20,11 +20,11 @@ MODEL_NAME = "Nanbeige/Nanbeige4-3B-Base"
 
 @app.function(
     image=image,
-    gpu="A10G",
+    gpu="A10",
     timeout=300,
     secrets=[modal.Secret.from_name("huggingface-secret")],
 )
-def run_inference(prompt: str = "中国的首都是") -> str:
+def run_inference(prompt: str) -> str:
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     hf_token = os.environ["HF_TOKEN"]
@@ -46,15 +46,19 @@ def run_inference(prompt: str = "中国的首都是") -> str:
         token=hf_token,
     )
 
-    print(f"running inference on prompt: {prompt!r}")
-    input_ids = tokenizer(prompt, return_tensors="pt").input_ids
+    inputs = tokenizer(prompt, return_tensors="pt")
+    input_ids = inputs["input_ids"].to("cuda")
+    attention_mask = inputs["attention_mask"].to("cuda")
+
     output_ids = model.generate(
-        input_ids.to("cuda"),
+        input_ids=input_ids,
+        attention_mask=attention_mask,
         max_new_tokens=100,
-    )
+        pad_token_id=tokenizer.eos_token_id,
+)
 
     response = tokenizer.decode(
-        output_ids[0][len(input_ids[0]):],
+        output_ids[0][input_ids.shape[1]:],
         skip_special_tokens=True,
     )
 

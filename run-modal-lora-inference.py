@@ -8,7 +8,7 @@ MODEL_NAME = "Nanbeige/Nanbeige4-3B-Base"
 VOLUME_NAME = "nanbeige4-lora-output"
 VOLUME_MOUNT_PATH = "/mnt/lora-output"
 ADAPTER_SUBDIR = "nanbeige4-3b-lora-v1"
-DEFAULT_MAX_NEW_TOKENS = 256
+DEFAULT_MAX_NEW_TOKENS = 1024
 
 HELD_OUT_PROMPTS = [
     "If 5 workers finish a task in 12 days at the same rate, how many days would 8 workers need? Show the reasoning clearly.",
@@ -96,7 +96,7 @@ def run_lora_inference(
             )
 
         generated_ids = output_ids[0][inputs["input_ids"].shape[1]:]
-        generated_text = tokenizer.decode(generated_ids, skip_special_tokens=True)
+        generated_text = tokenizer.decode(generated_ids, skip_special_tokens=False)
 
         result = {
             "prompt": prompt,

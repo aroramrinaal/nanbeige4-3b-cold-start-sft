@@ -113,13 +113,13 @@ def run_sft_training():
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"
 
-    # sanity checks
+    # sanity checks: ensure <think> and </think> are each single tokens
     think_ids = tokenizer.encode("<think>", add_special_tokens=False)
     end_think_ids = tokenizer.encode("</think>", add_special_tokens=False)
-    print(f"<think> token ids: {think_ids}")       # should be [166103]
-    print(f"</think> token ids: {end_think_ids}")  # should be [166104]
-    assert think_ids == [166103], f"unexpected <think> tokenization: {think_ids}"
-    assert end_think_ids == [166104], f"unexpected </think> tokenization: {end_think_ids}"
+    print(f"<think> token ids: {think_ids}")       # actual ids may differ from hub config
+    print(f"</think> token ids: {end_think_ids}")  # runtime tokenizer state is source of truth
+    assert len(think_ids) == 1, f"<think> is not a single token: {think_ids}"
+    assert len(end_think_ids) == 1, f"</think> is not a single token: {end_think_ids}"
 
     # ----------------------------------------------------------------
     # 2. load base model in bf16

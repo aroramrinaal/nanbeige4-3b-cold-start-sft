@@ -39,6 +39,16 @@ def build_prompt(user_prompt: str) -> str:
     return f"User: {user_prompt.strip()}\n"
 
 
+def normalize_response(generated_text: str) -> str:
+    # Training teaches the model to begin completions with "Assistant:".
+    # Strip that wrapper at inference time so the visible output starts at
+    # the learned reasoning block.
+    text = generated_text.lstrip()
+    if text.startswith("Assistant:"):
+        text = text[len("Assistant:"):].lstrip()
+    return text
+
+
 @app.function(
     image=image,
     gpu="A10",
@@ -97,18 +107,20 @@ def run_lora_inference(
 
         generated_ids = output_ids[0][inputs["input_ids"].shape[1]:]
         generated_text = tokenizer.decode(generated_ids, skip_special_tokens=False)
+        normalized_text = normalize_response(generated_text)
 
         result = {
             "prompt": prompt,
             "formatted_prompt": formatted_prompt,
-            "response": generated_text,
+            "response": normalized_text,
+            "raw_response": generated_text,
         }
         results.append(result)
 
         print(f"\n=== Prompt {idx} ===")
         print(prompt)
         print("\n--- Model output ---")
-        print(generated_text)
+        print(normalized_text)
 
     return results
 

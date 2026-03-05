@@ -92,7 +92,7 @@ def run_lora_inference(
     model.eval()
 
     results = []
-    for idx, prompt in enumerate(prompts, start=1):
+    for prompt in prompts:
         formatted_prompt = build_prompt(prompt)
         inputs = tokenizer(formatted_prompt, return_tensors="pt").to(model.device)
 
@@ -116,11 +116,6 @@ def run_lora_inference(
             "raw_response": generated_text,
         }
         results.append(result)
-
-        print(f"\n=== Prompt {idx} ===")
-        print(prompt)
-        print("\n--- Model output ---")
-        print(normalized_text)
 
     return results
 

@@ -40,7 +40,7 @@ def run_inference(prompt: str) -> str:
     print(f"Loading model for {MODEL_NAME}...")
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_NAME,
-        torch_dtype="auto",
+        dtype="auto",
         device_map="auto",
         trust_remote_code=True,
         token=hf_token,

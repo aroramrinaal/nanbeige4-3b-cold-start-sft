@@ -127,7 +127,7 @@ def run_sft_training():
     print("Loading base model...")
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_NAME,
-        torch_dtype=torch.bfloat16,
+        dtype=torch.bfloat16,
         device_map="auto",
         trust_remote_code=True,
         token=hf_token,

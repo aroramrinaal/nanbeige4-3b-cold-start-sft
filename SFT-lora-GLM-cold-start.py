@@ -40,6 +40,7 @@ image = (
         "matplotlib",
         "numpy",
     )
+    .add_local_python_source("training_graphs")
 )
 
 MODEL_NAME = "Nanbeige/Nanbeige4-3B-Base"

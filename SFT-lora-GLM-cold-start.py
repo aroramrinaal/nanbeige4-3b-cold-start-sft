@@ -47,6 +47,7 @@ DATASET_NAME = "crownelius/GLM-5.0-25000x"
 OUTPUT_DIR = f"{VOLUME_MOUNT_PATH}/nanbeige4-3b-lora-GLM-5.0-12000x"
 MAX_ROWS = 12_000
 MIN_THINKING_CHARS = 20
+DATASET_SHUFFLE_SEED = 42
 
 
 def format_example(example):
@@ -64,10 +65,19 @@ def format_example(example):
     }
 
 
-def filter_empty_thinking(example):
-    # drop rows where thinking trace is empty or too short to be useful
-    # training on empty thinking teaches the model to skip reasoning
-    return len(example["thinking"].strip()) >= MIN_THINKING_CHARS
+def _clean_text(value):
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def filter_valid_example(example):
+    # require all three fields to be present and non-empty
+    # training on blank prompt/solution rows either crashes or teaches junk formats
+    problem = _clean_text(example.get("problem"))
+    thinking = _clean_text(example.get("thinking"))
+    solution = _clean_text(example.get("solution"))
+    return bool(problem) and bool(solution) and len(thinking) >= MIN_THINKING_CHARS
 
 
 @app.function(
@@ -149,13 +159,15 @@ def run_sft_training():
     print(f"raw dataset size: {len(dataset)} rows")
 
     before_filter = len(dataset)
-    dataset = dataset.filter(filter_empty_thinking)
+    dataset = dataset.filter(filter_valid_example)
     after_filter = len(dataset)
-    print(f"after filtering empty thinking (< {MIN_THINKING_CHARS} chars): "
+    print(f"after filtering invalid rows / short thinking (< {MIN_THINKING_CHARS} chars): "
           f"{after_filter} rows (removed {before_filter - after_filter})")
 
     if len(dataset) > MAX_ROWS:
+        dataset = dataset.shuffle(seed=DATASET_SHUFFLE_SEED)
         dataset = dataset.select(range(MAX_ROWS))
+        print(f"selected a reproducible random subset using seed={DATASET_SHUFFLE_SEED}")
     print(f"final dataset size (capped at {MAX_ROWS}): {len(dataset)} rows")
 
     dataset = dataset.map(format_example, remove_columns=dataset.column_names)

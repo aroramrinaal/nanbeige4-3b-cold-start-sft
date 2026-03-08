@@ -54,6 +54,7 @@
 # -----------------------------------------------------------------------
 
 import os
+import math
 
 
 def plot_token_length_histogram(dataset, tokenizer, output_dir, sample_size=500):
@@ -144,7 +145,7 @@ def plot_loss_per_epoch(log_history, output_dir):
     epoch_losses = {}
     for entry in log_history:
         if "loss" in entry and "epoch" in entry:
-            ep = int(entry["epoch"])
+            ep = max(1, math.ceil(entry["epoch"]))
             epoch_losses.setdefault(ep, []).append(entry["loss"])
 
     if not epoch_losses:

@@ -8,7 +8,7 @@ MODEL_NAME = "Nanbeige/Nanbeige4-3B-Base"
 VOLUME_NAME = "nanbeige4-lora-output"
 VOLUME_MOUNT_PATH = "/mnt/lora-output"
 ADAPTER_SUBDIR = "nanbeige4-3b-lora-GLM-5.0-12000x"
-DEFAULT_MAX_NEW_TOKENS = 384
+DEFAULT_MAX_NEW_TOKENS = 1024
 
 TEST_PROMPT = (
     "A store increases a price of $80 by 15%. What is the new price?"

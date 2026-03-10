@@ -8,7 +8,7 @@ MODEL_NAME = "Nanbeige/Nanbeige4-3B-Base"
 VOLUME_NAME = "nanbeige4-lora-output"
 VOLUME_MOUNT_PATH = "/mnt/lora-output"
 ADAPTER_SUBDIR = "nanbeige4-3b-lora-GLM-5.0-12000x"
-DEFAULT_MAX_NEW_TOKENS = 1536
+DEFAULT_MAX_NEW_TOKENS = 384
 
 TEST_PROMPT = (
     "A store increases a price of $80 by 15%. What is the new price?"
@@ -42,6 +42,24 @@ def normalize_response(generated_text: str) -> str:
     return text
 
 
+def trim_repeated_completion(text: str) -> str:
+    # Keep only the first completed reasoning/answer block if the model starts
+    # another cycle like "</think> ... </think> ..." after the answer.
+    first_close = text.find("</think>")
+    if first_close == -1:
+        return text
+
+    second_close = text.find("</think>", first_close + len("</think>"))
+    if second_close != -1:
+        return text[:second_close].rstrip()
+
+    repeated_think = text.find("<think>", first_close + len("</think>"))
+    if repeated_think != -1:
+        return text[:repeated_think].rstrip()
+
+    return text.rstrip()
+
+
 @app.function(
     image=image,
     gpu="A10",
@@ -56,7 +74,7 @@ def run_lora_inference(
 ):
     import torch
     from peft import PeftModel
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import AutoModelForCausalLM, AutoTokenizer, StoppingCriteria, StoppingCriteriaList
 
     hf_token = os.environ["HF_TOKEN"]
     adapter_path = f"{VOLUME_MOUNT_PATH}/{adapter_subdir}"
@@ -84,10 +102,29 @@ def run_lora_inference(
     model = PeftModel.from_pretrained(base_model, adapter_path)
     model.eval()
 
+    class RepeatThinkStop(StoppingCriteria):
+        def __init__(self, tokenizer, prompt_lengths):
+            self.tokenizer = tokenizer
+            self.prompt_lengths = prompt_lengths
+
+        def __call__(self, input_ids, scores, **kwargs):
+            for row_idx in range(input_ids.shape[0]):
+                generated_ids = input_ids[row_idx][self.prompt_lengths[row_idx]:]
+                text = self.tokenizer.decode(generated_ids, skip_special_tokens=False)
+                if text.count("</think>") >= 2:
+                    return True
+                first_close = text.find("</think>")
+                if first_close != -1 and text.find("<think>", first_close + len("</think>")) != -1:
+                    return True
+            return False
+
     results = []
     for prompt in prompts:
         formatted_prompt = build_prompt(prompt)
         inputs = tokenizer(formatted_prompt, return_tensors="pt").to(model.device)
+        stopping_criteria = StoppingCriteriaList(
+            [RepeatThinkStop(tokenizer, [inputs["input_ids"].shape[1]])]
+        )
 
         with torch.inference_mode():
             output_ids = model.generate(
@@ -96,17 +133,20 @@ def run_lora_inference(
                 do_sample=False,
                 pad_token_id=tokenizer.eos_token_id,
                 eos_token_id=tokenizer.eos_token_id,
+                stopping_criteria=stopping_criteria,
             )
 
         generated_ids = output_ids[0][inputs["input_ids"].shape[1]:]
         generated_text = tokenizer.decode(generated_ids, skip_special_tokens=False)
         normalized_text = normalize_response(generated_text)
+        cleaned_text = trim_repeated_completion(normalized_text)
 
         results.append(
             {
                 "prompt": prompt,
                 "formatted_prompt": formatted_prompt,
-                "response": normalized_text,
+                "response": cleaned_text,
+                "normalized_response": normalized_text,
                 "raw_response": generated_text,
             }
         )

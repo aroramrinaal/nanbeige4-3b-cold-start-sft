@@ -164,6 +164,7 @@ def run_sft_training():
     print(f"dataset size: {len(dataset)} rows")
 
     dataset = dataset.map(format_example, remove_columns=dataset.column_names)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
     print("Sample prompt:")
     print(dataset[0]["prompt"])
     print("sample completion (first 300 chars):")

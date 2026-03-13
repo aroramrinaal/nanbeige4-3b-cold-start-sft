@@ -1,0 +1,56 @@
+Opus 4.6 token length analysis
+
+total examples: 2160
+
+full sequence summary:
+{
+  "count": 2160,
+  "min": 116,
+  "max": 8243,
+  "mean": 801.57,
+  "p50": 717,
+  "p90": 1280,
+  "p95": 1611,
+  "p99": 2352
+}
+
+prompt summary:
+{
+  "count": 2160,
+  "min": 6,
+  "max": 2942,
+  "mean": 105.64,
+  "p50": 53,
+  "p90": 200,
+  "p95": 452,
+  "p99": 1017
+}
+
+completion summary:
+{
+  "count": 2160,
+  "min": 76,
+  "max": 8217,
+  "mean": 695.92,
+  "p50": 613,
+  "p90": 1130,
+  "p95": 1410,
+  "p99": 2238
+}
+
+cutoff tradeoffs:
+- cutoff 2048
+  full truncated: 43 (1.99%)
+  completion-only > cutoff: 32 (1.48%)
+  </think> survives: 2154 (99.72%)
+  </s> survives: 2117 (98.01%)
+- cutoff 3072
+  full truncated: 10 (0.46%)
+  completion-only > cutoff: 6 (0.28%)
+  </think> survives: 2158 (99.91%)
+  </s> survives: 2150 (99.54%)
+- cutoff 4096
+  full truncated: 2 (0.09%)
+  completion-only > cutoff: 2 (0.09%)
+  </think> survives: 2160 (100.0%)
+  </s> survives: 2158 (99.91%)

@@ -61,7 +61,7 @@ image = (
 
 MODEL_NAME = "Nanbeige/Nanbeige4-3B-Base"
 DATASET_NAME = "crownelius/Opus-4.6-Reasoning-3300x"
-OUTPUT_DIR = f"{VOLUME_MOUNT_PATH}/opus-4.6-experiment-v2/nanbeige4-3b-lora-v2"
+OUTPUT_DIR = f"{VOLUME_MOUNT_PATH}/opus-4.6-experiment-v2/nanbeige4-3b-lora-v2-epoch3"
 
 
 def format_example(example):

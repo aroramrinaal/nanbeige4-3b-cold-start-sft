@@ -61,7 +61,7 @@ image = (
 
 MODEL_NAME = "Nanbeige/Nanbeige4-3B-Base"
 DATASET_NAME = "crownelius/Opus-4.6-Reasoning-3300x"
-OUTPUT_DIR = f"{VOLUME_MOUNT_PATH}/opus-4.6-experiment-v2/nanbeige4-3b-lora-v2-epoch3"
+OUTPUT_DIR = f"{VOLUME_MOUNT_PATH}/opus-4.6-experiment-v2/nanbeige4-3b-lora-v2-epoch4"
 
 
 def format_example(example):
@@ -189,7 +189,7 @@ def run_sft_training():
     print("Setting up training args...")
     training_args = SFTConfig(
         output_dir=OUTPUT_DIR,
-        num_train_epochs=3,
+        num_train_epochs=4,
         per_device_train_batch_size=4,   # h100 80gb handles 3b + lora at batch 4 fine
         gradient_accumulation_steps=4,   # effective batch size = 4 * 4 = 16
         learning_rate=2e-4,

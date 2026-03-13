@@ -10,11 +10,7 @@ VOLUME_MOUNT_PATH = "/mnt/lora-output"
 ADAPTER_SUBDIR = "nanbeige4-3b-lora-v1"
 DEFAULT_MAX_NEW_TOKENS = 1024
 
-HELD_OUT_PROMPTS = [
-    "If 5 workers finish a task in 12 days at the same rate, how many days would 8 workers need? Show the reasoning clearly.",
-    "A shop gives 20% off and then an extra 10% off. Is that the same as 30% off? Explain with an example price of $100.",
-    "Mira has 3 red marbles, 5 blue marbles, and 2 green marbles. If she picks one marble at random, what is the probability it is not blue?",
-]
+TEST_PROMPT = "If 5 workers finish a task in 12 days at the same rate, how many days would 8 workers need? Show the reasoning clearly."
 
 volume = modal.Volume.from_name(VOLUME_NAME, create_if_missing=False)
 
@@ -68,7 +64,6 @@ def run_lora_inference(
     hf_token = os.environ["HF_TOKEN"]
     adapter_path = f"{VOLUME_MOUNT_PATH}/{adapter_subdir}"
 
-    print(f"Loading tokenizer from {MODEL_NAME}...")
     tokenizer = AutoTokenizer.from_pretrained(
         MODEL_NAME,
         use_fast=False,
@@ -78,7 +73,6 @@ def run_lora_inference(
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "left"
 
-    print(f"Loading base model from {MODEL_NAME}...")
     base_model = AutoModelForCausalLM.from_pretrained(
         MODEL_NAME,
         dtype=torch.bfloat16,
@@ -87,7 +81,6 @@ def run_lora_inference(
         token=hf_token,
     )
 
-    print(f"Loading LoRA adapter from {adapter_path}...")
     model = PeftModel.from_pretrained(base_model, adapter_path)
     model.eval()
 
@@ -125,13 +118,17 @@ def main(
     adapter_subdir: str = ADAPTER_SUBDIR,
     max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS,
 ):
-    results = run_lora_inference.remote(
-        prompts=HELD_OUT_PROMPTS,
+    result = run_lora_inference.remote(
+        prompts=[TEST_PROMPT],
         adapter_subdir=adapter_subdir,
         max_new_tokens=max_new_tokens,
-    )
+    )[0]
 
-    print("\n=== Summary ===")
-    for idx, result in enumerate(results, start=1):
-        print(f"\nPrompt {idx}: {result['prompt']}")
-        print(result["response"])
+    print("\n" + "=" * 60)
+    print("PROMPT")
+    print("=" * 60)
+    print(result["prompt"])
+    print("\n" + "=" * 60)
+    print("RESPONSE")
+    print("=" * 60)
+    print(result["response"])
